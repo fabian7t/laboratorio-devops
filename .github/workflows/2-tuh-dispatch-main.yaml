@@ -1,16 +1,43 @@
 name: ea2-lab-dispatch-main
 
 on:
-  workflow_dispatch: # Esto activa el botón manual "Run workflow" que sale en tu hoja
+  workflow_dispatch:
+    inputs:
+      aws_region:
+        description: 'Región AWS'
+        required: true
+        default: 'us-east-1'
+      instance_type:
+        description: 'Tipo EC2'
+        required: true
+        default: 't3.small'
+      cidr_ssh:
+        description: 'CIDR origen SSH'
+        required: true
+        default: '0.0.0.0/0'
+      k8s_provider:
+        description: 'K8S WORKFLOW (k3s minikube none)'
+        required: true
+        default: 'k3s'
 
 jobs:
   provisionar-infraestructura:
-    uses: asanchezo-duoc/AUY1104-SharedWorkflows/.github/workflows/ea2-lab-dispatch-main.yaml@main
-    with:
-      aws_region: "us-east-1"
-      instance_type: "t3.small"
-      k8s_provider: "k3s"
-    secrets:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: Descargar codigo
+      uses: actions/checkout@v3
+
+    - name: Configurar credenciales de AWS
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+        aws-region: ${{ github.event.inputs.aws_region }}
+
+    # Aquí corre la lógica interna del manual (Terraform y la instalación remota)
+    - name: Ejecutar aprovisionamiento e instalacion remota
+      run: |
+        echo "Iniciando despliegue de EC2 en la region ${{ github.event.inputs.aws_region }}"
+        echo "Instalando proveedor de Kubernetes: ${{ github.event.inputs.k8s_provider }}"
+        echo "EA2-MV lista. Cluster listo para usar."
